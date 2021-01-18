@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class ShoutingMTServer {
+public class Main {
     public static final int PORT = 2500;
     private static final int maxnrofConnections = 800;
     public static TelSemafoor mijnSemafoor = new TelSemafoor(maxnrofConnections);

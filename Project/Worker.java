@@ -29,7 +29,7 @@ class Worker implements Runnable {
             //System.err.println("New worker thread started");
 
             //check if maximum number of connections reached
-            ShoutingMTServer.mijnSemafoor.probeer();
+            Main.mijnSemafoor.probeer();
 
             StringBuilder builder = null;
             String line;
@@ -50,7 +50,7 @@ class Worker implements Runnable {
             connection.close();
             //System.err.println("Connection closed: workerthread ending");
             // upping the semaphore.. since the connnection is gone....
-            ShoutingMTServer.mijnSemafoor.verhoog();
+            Main.mijnSemafoor.verhoog();
         } catch (IOException | InterruptedException | JAXBException e) {
             e.printStackTrace();
         }

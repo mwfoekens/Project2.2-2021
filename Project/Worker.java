@@ -69,6 +69,12 @@ class Worker implements Runnable {
     }
 
     private void correctIfEmpty(Measurement measurement) {
+        if (measurement.getStn().equals(Measurement.getTemp) || 
+            measurement.getStn().equals(Measurement.getTemp * 1.20) ||
+            measurement.getStn().equals(Measurement.getTemp * 0.80)
+            measurement.setStn(this.Measurement);
+		}
+        
         if (measurement.getStn().equals("")) {
             measurement.setStn("0");
         }

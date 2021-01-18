@@ -13,14 +13,15 @@ class Worker implements Runnable {
     private BufferedReader bufferedReader;
     private JAXBContext jaxbContext;
     private Unmarshaller jaxbUnmarshaller;
-    private DBThread dbThread;
+//    private DBThread dbThread;
+    private DataSaver dataSaver;
 
-    public Worker(Socket connection, DBThread dbThread) throws JAXBException, IOException {
+    public Worker(Socket connection, DataSaver dataSaver) throws JAXBException, IOException {
         this.connection = connection;
         this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         this.jaxbContext = JAXBContext.newInstance(WeatherData.class);
         this.jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        this.dbThread = dbThread;
+        this.dataSaver = dataSaver;
     }
 
     @Override
@@ -60,7 +61,7 @@ class Worker implements Runnable {
         for (int i = 0; i < q.getMeasurements().size(); i++) {
             Measurement item = q.getMeasurements().get(i);
             correctIfEmpty(item);
-            dbThread.queue.add(item);
+            dataSaver.queue.add(item);
         }
     }
 
@@ -69,12 +70,11 @@ class Worker implements Runnable {
     }
 
     private void correctIfEmpty(Measurement measurement) {
-        if (measurement.getStn().equals(Measurement.getTemp) || 
-            measurement.getStn().equals(Measurement.getTemp * 1.20) ||
-            measurement.getStn().equals(Measurement.getTemp * 0.80)
-            measurement.setStn(this.Measurement);
-		}
-        
+//        if (measurement.getStn().equals(Measurement.getTemp()) ||
+//            measurement.getStn().equals(Measurement.getTemp() * 1.20) ||
+//            measurement.getStn().equals(Measurement.getTemp() * 0.80))
+//            measurement.setStn(this.Measurement);
+//
         if (measurement.getStn().equals("")) {
             measurement.setStn("0");
         }

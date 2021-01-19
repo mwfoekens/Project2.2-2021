@@ -5,6 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Woof Woof.
@@ -26,6 +28,7 @@ public class DataRetriever {
 
     /**
      * Checks if target directory exists
+     *
      * @param targetDir targetDir should be a station number
      * @return returns whether the station number exists
      */
@@ -36,8 +39,6 @@ public class DataRetriever {
 
     /**
      * Retrieves all data from a specific station number.
-     *
-     *
      *
      * @param targetDir targetDir should be a station number
      * @throws IOException had to add this exception otherwise IntelliJ cries.
@@ -81,5 +82,101 @@ public class DataRetriever {
         } else {
             System.err.println("Target directory does not exist");
         }
+    }
+
+    ArrayList<Float> retrieveTopTenStationPressure(String targetDir) throws IOException {
+        if (dirExists(targetDir)) {
+            String path = pathToDataDir + "\\" + targetDir;
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
+                String line;
+                String[] data;
+                ArrayList<Float> stationPressure = new ArrayList<>();
+                while ((line = bufferedReader.readLine()) != null) {
+                    data = line.split(",");
+                    float stp = Float.parseFloat(data[5]);
+                    stationPressure.add(stp);
+                }
+                Collections.reverse(stationPressure);
+                return stationPressure;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Target directory does not exist");
+        }
+        return null;
+    }
+
+    ArrayList<Float> retrieveTopTenSeaLevelPressure(String targetDir) throws IOException {
+        if (dirExists(targetDir)) {
+            String path = pathToDataDir + "\\" + targetDir;
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
+                String line;
+                String[] data;
+                ArrayList<Float> seaLevelPressure = new ArrayList<>();
+                while ((line = bufferedReader.readLine()) != null) {
+                    data = line.split(",");
+                    float stp = Float.parseFloat(data[6]);
+                    seaLevelPressure.add(stp);
+                }
+                Collections.reverse(seaLevelPressure);
+                return seaLevelPressure;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Target directory does not exist");
+        }
+        return null;
+    }
+
+    ArrayList<Integer> retrieveWindDirection(String targetDir) throws IOException {
+        if (dirExists(targetDir)) {
+            String path = pathToDataDir + "\\" + targetDir;
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
+                String line;
+                String[] data;
+                ArrayList<Integer> windDirection = new ArrayList<>();
+                while ((line = bufferedReader.readLine()) != null) {
+                    data = line.split(",");
+                    int wnddir = Integer.parseInt(data[13]);
+                    windDirection.add(wnddir);
+                }
+                Collections.reverse(windDirection);
+                return windDirection;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Target directory does not exist");
+        }
+        return null;
+    }
+
+    ArrayList<Float> retrieveWindSpeed(String targetDir) throws IOException {
+        if (dirExists(targetDir)) {
+            String path = pathToDataDir + "\\" + targetDir;
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
+                String line;
+                String[] data;
+                ArrayList<Float> windDirection = new ArrayList<>();
+                while ((line = bufferedReader.readLine()) != null) {
+                    data = line.split(",");
+                    float wdsp = Float.parseFloat(data[8]);
+                    windDirection.add(wdsp);
+                }
+                Collections.reverse(windDirection);
+                return windDirection;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("Target directory does not exist");
+        }
+        return null;
     }
 }

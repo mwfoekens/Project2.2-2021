@@ -13,7 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @version 1.0
  */
 public class DataSaver implements Runnable {
-    private final String dirPath;
+    private final Path dirPath;
     private final String dataDir;
     public final BlockingQueue<Measurement> queue = new LinkedBlockingQueue<>();
 
@@ -24,7 +24,7 @@ public class DataSaver implements Runnable {
      * @param dataDir Directory where the data is going to be saved
      * @throws IOException had to add this exception otherwise IntelliJ cries.
      */
-    public DataSaver(String dirPath, String dataDir) throws IOException {
+    public DataSaver(Path dirPath, String dataDir) throws IOException {
         this.dirPath = dirPath;
         this.dataDir = dataDir;
 
@@ -49,13 +49,13 @@ public class DataSaver implements Runnable {
             try {
                 // Grabs a new value from the queue and makes a new directory for the station if it doesn't already exist
                 Measurement values = queue.take();
-                String stnPath = dirPath + "\\" + dataDir + "\\" + values.getStn();
-                if (!Files.exists(Path.of(stnPath))) {
-                    Files.createDirectory(Path.of(stnPath));
+                Path stnPath = dirPath.resolve(dataDir).resolve(values.getStn());
+                if (!Files.exists(stnPath)) {
+                    Files.createDirectory(stnPath);
                 }
 
                 // Writes to .csv file. Doesn't need to be closed, because try-with-resources takes care of that.
-                try (FileWriter fileWriter = new FileWriter(String.valueOf(Path.of(stnPath, "Measurements.csv")), true)) {
+                try (FileWriter fileWriter = new FileWriter(String.valueOf(stnPath.resolve("Measurements.csv")), true)) {
 
                     writeCell(fileWriter, values.getStn());
                     writeCell(fileWriter, values.getDate());
@@ -72,8 +72,6 @@ public class DataSaver implements Runnable {
                     writeCell(fileWriter, values.getCldc());
                     writeCellnl(fileWriter, values.getWnddir());
 
-                    // Flush for good practice
-                    fileWriter.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

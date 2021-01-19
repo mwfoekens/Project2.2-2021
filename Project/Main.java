@@ -2,6 +2,7 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
 
 public class Main {
     public static final int PORT = 2500;
@@ -10,11 +11,8 @@ public class Main {
 
     public static void main(String[] args) throws JAXBException, IOException {
         Socket connection;
-//        DBThread dbQueue = new DBThread();
-//        Thread dbThread = new Thread(dbQueue);
-//        dbThread.start();
-        // CHANGE dirPATH TO SHARED FILESYSTEM!!!
-        DataSaver dataSaver = new DataSaver("D:\\Programmershit\\Project2.2-2021", "Data");
+        // TODO CHANGE dirPATH TO SHARED FILESYSTEM!!!
+        DataSaver dataSaver = new DataSaver(Path.of("D:\\Programmershit\\Project2.2-2021"), "Data");
         Thread dataThread = new Thread(dataSaver);
         dataThread.start();
         ServerSocket server = new ServerSocket(PORT);

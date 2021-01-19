@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.function.Function;
 
 /**
  * Woof Woof.
@@ -14,14 +14,14 @@ import java.util.Collections;
  *
  * @author Merel Foekens
  * @author https://github.com/mwfoekens
- * @version 0.5
+ * @version 0.8
  */
 public class DataRetriever {
-    private final String pathToDataDir;
+    private final Path pathToDataDir;
 
-    public DataRetriever(String pathToDataDir) {
+    public DataRetriever(Path pathToDataDir) {
         this.pathToDataDir = pathToDataDir;
-        if (!Files.exists(Path.of(pathToDataDir))) {
+        if (!Files.exists(pathToDataDir)) {
             System.err.println("Directory does not exist. Path: " + pathToDataDir);
         }
     }
@@ -30,19 +30,12 @@ public class DataRetriever {
      * Checks if target directory exists
      *
      * @param targetDir targetDir should be a station number
-     * @return returns whether the station number exists
+     * @return returns whether the station number directory exists
      */
-    boolean dirExists(String targetDir) {
-        String path = pathToDataDir + "\\" + targetDir;
-        return Files.exists(Path.of(path));
+    boolean dirExists(Path targetDir) {
+        Path path = pathToDataDir.resolve(targetDir);
+        return Files.exists(path);
     }
-
-    /**
-     * Retrieves all data from a specific station number.
-     *
-     * @param targetDir targetDir should be a station number
-     * @throws IOException had to add this exception otherwise IntelliJ cries.
-     */
 
 //    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
 //    Top 10 air pressure of all stations in Kenya and Djibouti
@@ -67,116 +60,63 @@ public class DataRetriever {
     //DJIBOUTI STATION NR
     //631260
     //631250
-    void retrieveData(String targetDir) throws IOException {
-        if (dirExists(targetDir)) {
-            String path = pathToDataDir + "\\" + targetDir;
-            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    // what to do with each line
-                    System.out.println(line);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Target directory does not exist");
-        }
+
+    /**
+     * Retrieve station pressure
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of station pressure
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveStp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[5]));
     }
 
-    ArrayList<Float> retrieveTopTenStationPressure(String targetDir) throws IOException {
-        if (dirExists(targetDir)) {
-            String path = pathToDataDir + "\\" + targetDir;
-            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
-                String line;
-                String[] data;
-                ArrayList<Float> stationPressure = new ArrayList<>();
-                while ((line = bufferedReader.readLine()) != null) {
-                    data = line.split(",");
-                    float stp = Float.parseFloat(data[5]);
-                    stationPressure.add(stp);
-                }
-                Collections.reverse(stationPressure);
-                return stationPressure;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Target directory does not exist");
-        }
-        return null;
+    /**
+     * Retrieve sea level pressure
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of sea level pressure
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveSlp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[6]));
     }
 
-    ArrayList<Float> retrieveTopTenSeaLevelPressure(String targetDir) throws IOException {
-        if (dirExists(targetDir)) {
-            String path = pathToDataDir + "\\" + targetDir;
-            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
-                String line;
-                String[] data;
-                ArrayList<Float> seaLevelPressure = new ArrayList<>();
-                while ((line = bufferedReader.readLine()) != null) {
-                    data = line.split(",");
-                    float stp = Float.parseFloat(data[6]);
-                    seaLevelPressure.add(stp);
-                }
-                Collections.reverse(seaLevelPressure);
-                return seaLevelPressure;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Target directory does not exist");
-        }
-        return null;
+    /**
+     * Retrieve wind speed
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of wind speed
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveWdsp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[8]));
     }
 
-    ArrayList<Integer> retrieveWindDirection(String targetDir) throws IOException {
-        if (dirExists(targetDir)) {
-            String path = pathToDataDir + "\\" + targetDir;
-            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
-                String line;
-                String[] data;
-                ArrayList<Integer> windDirection = new ArrayList<>();
-                while ((line = bufferedReader.readLine()) != null) {
-                    data = line.split(",");
-                    int wnddir = Integer.parseInt(data[13]);
-                    windDirection.add(wnddir);
-                }
-                Collections.reverse(windDirection);
-                return windDirection;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Target directory does not exist");
-        }
-        return null;
+    /**
+     * Retrieve wind direction.
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of wind direction
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Integer> retrieveWnddir(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Integer.parseInt(row[13]));
     }
 
-    ArrayList<Float> retrieveWindSpeed(String targetDir) throws IOException {
-        if (dirExists(targetDir)) {
-            String path = pathToDataDir + "\\" + targetDir;
-            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path + "\\Measurements.csv"))) {
+    <R> ArrayList<R> retrieveColumn(Path targetDir, Function<String[], R> get) throws IOException {
+        if (!dirExists(targetDir)) {
+            throw new IOException("Target directory " + targetDir + " does not exist");
+        } else {
+            try (BufferedReader bufferedReader = new BufferedReader(
+                    new FileReader(String.valueOf(pathToDataDir.resolve(targetDir).resolve("Measurements.csv"))))) {
                 String line;
                 String[] data;
-                ArrayList<Float> windDirection = new ArrayList<>();
+                ArrayList<R> results = new ArrayList<>();
                 while ((line = bufferedReader.readLine()) != null) {
                     data = line.split(",");
-                    float wdsp = Float.parseFloat(data[8]);
-                    windDirection.add(wdsp);
+                    R cell = get.apply(data);
+                    results.add(cell);
                 }
-                Collections.reverse(windDirection);
-                return windDirection;
-
-            } catch (IOException e) {
-                e.printStackTrace();
+                return results;
             }
-        } else {
-            System.err.println("Target directory does not exist");
         }
-        return null;
     }
 }

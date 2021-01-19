@@ -13,6 +13,7 @@ public class Main {
 //        DBThread dbQueue = new DBThread();
 //        Thread dbThread = new Thread(dbQueue);
 //        dbThread.start();
+        // CHANGE dirPATH TO SHARED FILESYSTEM!!!
         DataSaver dataSaver = new DataSaver("D:\\Programmershit\\Project2.2-2021", "Data");
         Thread dataThread = new Thread(dataSaver);
         dataThread.start();

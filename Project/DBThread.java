@@ -6,6 +6,10 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * @deprecated replaced by DataSaver.java
+ */
+
 public class DBThread implements Runnable {
     public final BlockingQueue<Measurement> queue = new LinkedBlockingQueue<>();
     private Connection connection;

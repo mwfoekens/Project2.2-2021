@@ -61,13 +61,14 @@ class Worker implements Runnable {
 
     /**
      * compares entirety of the weatherdata unit, adds to the queue of DataSaver.java
-     * @param q an entire weatherdata unit
+     *
+     * @param q an entire weather data unit
      * @throws IOException had to add otherwise IntelliJ cries
      */
-    private void addToQueue(WeatherData q) throws IOException {
+    private void addToQueue(WeatherData q) throws IOException, InterruptedException {
         for (int i = 0; i < q.getMeasurements().size(); i++) {
             Measurement item = q.getMeasurements().get(i);
-            if (compareData(item)){
+            if (compareData(item)) {
                 dataSaver.queue.add(item);
             }
         }
@@ -79,6 +80,7 @@ class Worker implements Runnable {
 
     /**
      * Checks if any measurement fields are empty.
+     *
      * @param measurement measurement that needs to be checked
      * @deprecated replaced by compareData()
      */
@@ -90,11 +92,12 @@ class Worker implements Runnable {
 
     /**
      * Data correcting method.
+     *
      * @param measurement measurement that needs to be checked.
      * @return returns whether measurement should be added. (Is only false if it's the first measurement of that station and not within proper ranges).
      * @throws IOException had to add otherwise IntelliJ cries
      */
-    private boolean compareData(Measurement measurement) throws IOException {
+    private boolean compareData(Measurement measurement) throws IOException, InterruptedException {
 
         DataRetriever dataRetriever = new DataRetriever(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"));
 
@@ -102,6 +105,16 @@ class Worker implements Runnable {
         if (!dataRetriever.dirExists(Path.of(String.valueOf(measurement.getStn())))) {
             return checkUltimateValues(measurement);
         } else {
+            // There are fringe cases where the directory exists, but the .csv doesn't exist yet. In this rare case,
+            // the thread must sleep and check again later if the .csv exists or not. The directory & .csv are created in
+            // the same place in class DataSaver, but it's possible that the thread in DataSaver gets interrupted before
+            // it gets to make the .csv, in which another thread might try to access the non-existent .csv file (which
+            // is something that happens below. The DataRetriever grabs values from the .csv, that, in this fringe case,
+            // might not exist yet.
+            // My point is, don't remove this while loop. Thanks.
+            while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))){
+                Thread.sleep(5);
+            }
             List<Float> temp = dataRetriever.retrieveTemp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
             measurement.setTemp(repairField(temp, measurement.getTemp()));
             List<Float> dewp = dataRetriever.retrieveDewp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
@@ -121,14 +134,15 @@ class Worker implements Runnable {
             List<Float> cldc = dataRetriever.retrieveCldc(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
             List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).map(Integer::floatValue).collect(Collectors.toList());
-            measurement.setWnddir((int) repairField(wnddir, measurement.getWnddir()));
+            measurement.setWnddir((int) Math.round(repairField(wnddir, measurement.getWnddir())));
             return true;
         }
     }
 
     /**
      * Compares the param field against the rest of the data. Field has to be within a 20% margin of the average.
-     * @param data list of floats containing comparing data
+     *
+     * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
      * @return returns the average value if false, returns the input value if true
      */
@@ -150,6 +164,7 @@ class Worker implements Runnable {
 
     /**
      * Checks if the data is within possible range.
+     *
      * @param measurement measurement unit
      * @return returns true if ALL are true. If one is false, something is wrong.
      */
@@ -171,6 +186,7 @@ class Worker implements Runnable {
 
     /**
      * Method to check if value within range.
+     *
      * @param min minimum possible value
      * @param max maximum possible value
      * @param value value of the data.

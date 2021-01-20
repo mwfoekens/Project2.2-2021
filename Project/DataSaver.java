@@ -54,7 +54,8 @@ public class DataSaver implements Runnable {
                     Files.createDirectory(stnPath);
                 }
 
-                // Writes to .csv file. Doesn't need to be closed, because try-with-resources takes care of that.
+                // Writes to .csv file. Doesn't need to be flushed/closed, because try-with-resources takes care of that.
+                // Creates/appends to the .csv file.
                 try (FileWriter fileWriter = new FileWriter(String.valueOf(stnPath.resolve("Measurements.csv")), true)) {
 
                     writeCell(fileWriter, Integer.toString(values.getStn()));

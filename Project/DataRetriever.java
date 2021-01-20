@@ -35,6 +35,11 @@ public class DataRetriever {
         return Files.exists(path);
     }
 
+    boolean csvExists(Path targetDir){
+        Path path = pathToDataDir.resolve(targetDir).resolve("Measurements.csv");
+        return Files.exists(path);
+    }
+
     //    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
 //    Top 10 air pressure of all stations in Kenya and Djibouti
     //KENYA STATION NR

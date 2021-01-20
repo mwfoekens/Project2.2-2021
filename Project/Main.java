@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 public class Main {
     public static final int PORT = 2500;
-    private static final int maxnrofConnections = 1;
+    private static final int maxnrofConnections = 800;
     public static TelSemafoor mijnSemafoor = new TelSemafoor(maxnrofConnections);
 
     public static void main(String[] args) throws JAXBException, IOException {

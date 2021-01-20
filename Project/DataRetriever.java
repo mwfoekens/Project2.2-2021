@@ -1,5 +1,3 @@
-package DataRetriever;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,7 +12,7 @@ import java.util.function.Function;
  *
  * @author Merel Foekens
  * @author https://github.com/mwfoekens
- * @version 0.8
+ * @version 1
  */
 public class DataRetriever {
     private final Path pathToDataDir;
@@ -37,7 +35,7 @@ public class DataRetriever {
         return Files.exists(path);
     }
 
-//    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
+    //    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
 //    Top 10 air pressure of all stations in Kenya and Djibouti
     //KENYA STATION NR
     //636950
@@ -62,7 +60,31 @@ public class DataRetriever {
     //631250
 
     /**
+     * Retrieve temperature
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of temperatures
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveTemp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[3]));
+    }
+
+    /**
+     * Retrieve humidity
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of humidity
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveDewp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[4]));
+    }
+
+
+    /**
      * Retrieve station pressure
+     *
      * @param targetDir targetDir should be a station number
      * @return returns a list of station pressure
      * @throws IOException had to add otherwise intelliJ cries
@@ -73,6 +95,7 @@ public class DataRetriever {
 
     /**
      * Retrieve sea level pressure
+     *
      * @param targetDir targetDir should be a station number
      * @return returns a list of sea level pressure
      * @throws IOException had to add otherwise intelliJ cries
@@ -82,7 +105,19 @@ public class DataRetriever {
     }
 
     /**
+     * Retrieve visibility
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of visibilties
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveVisib(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[7]));
+    }
+
+    /**
      * Retrieve wind speed
+     *
      * @param targetDir targetDir should be a station number
      * @return returns a list of wind speed
      * @throws IOException had to add otherwise intelliJ cries
@@ -92,7 +127,41 @@ public class DataRetriever {
     }
 
     /**
+     * Retrieve precipitation
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of precipitation
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrievePrcp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[9]));
+    }
+
+    /**
+     * Retrieve snow fall
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of snow fall
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveSndp(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[10]));
+    }
+
+    /**
+     * Retrieve cloudiness
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns a list of cloudiness
+     * @throws IOException had to add otherwise intelliJ cries
+     */
+    ArrayList<Float> retrieveCldc(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> Float.parseFloat(row[12]));
+    }
+
+    /**
      * Retrieve wind direction.
+     *
      * @param targetDir targetDir should be a station number
      * @return returns a list of wind direction
      * @throws IOException had to add otherwise intelliJ cries
@@ -101,7 +170,7 @@ public class DataRetriever {
         return retrieveColumn(targetDir, row -> Integer.parseInt(row[13]));
     }
 
-    <R> ArrayList<R> retrieveColumn(Path targetDir, Function<String[], R> get) throws IOException {
+    private <R> ArrayList<R> retrieveColumn(Path targetDir, Function<String[], R> get) throws IOException {
         if (!dirExists(targetDir)) {
             throw new IOException("Target directory " + targetDir + " does not exist");
         } else {

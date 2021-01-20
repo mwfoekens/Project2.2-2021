@@ -49,7 +49,7 @@ public class DataSaver implements Runnable {
             try {
                 // Grabs a new value from the queue and makes a new directory for the station if it doesn't already exist
                 Measurement values = queue.take();
-                Path stnPath = dirPath.resolve(dataDir).resolve(values.getStn());
+                Path stnPath = dirPath.resolve(dataDir).resolve(Integer.toString(values.getStn()));
                 if (!Files.exists(stnPath)) {
                     Files.createDirectory(stnPath);
                 }
@@ -57,20 +57,20 @@ public class DataSaver implements Runnable {
                 // Writes to .csv file. Doesn't need to be closed, because try-with-resources takes care of that.
                 try (FileWriter fileWriter = new FileWriter(String.valueOf(stnPath.resolve("Measurements.csv")), true)) {
 
-                    writeCell(fileWriter, values.getStn());
+                    writeCell(fileWriter, Integer.toString(values.getStn()));
                     writeCell(fileWriter, values.getDate());
                     writeCell(fileWriter, values.getTime());
-                    writeCell(fileWriter, values.getTemp());
-                    writeCell(fileWriter, values.getDewp());
-                    writeCell(fileWriter, values.getStp());
-                    writeCell(fileWriter, values.getSlp());
-                    writeCell(fileWriter, values.getVisib());
-                    writeCell(fileWriter, values.getWdsp());
-                    writeCell(fileWriter, values.getPrcp());
-                    writeCell(fileWriter, values.getSndp());
+                    writeCell(fileWriter, Float.toString(values.getTemp()));
+                    writeCell(fileWriter, Float.toString(values.getDewp()));
+                    writeCell(fileWriter, Float.toString(values.getStp()));
+                    writeCell(fileWriter, Float.toString(values.getSlp()));
+                    writeCell(fileWriter, Float.toString(values.getVisib()));
+                    writeCell(fileWriter, Float.toString(values.getWdsp()));
+                    writeCell(fileWriter, Float.toString(values.getPrcp()));
+                    writeCell(fileWriter, Float.toString(values.getSndp()));
                     writeCell(fileWriter, values.getFrshtt());
-                    writeCell(fileWriter, values.getCldc());
-                    writeCellnl(fileWriter, values.getWnddir());
+                    writeCell(fileWriter, Float.toString(values.getCldc()));
+                    writeCellnl(fileWriter, Integer.toString(values.getWnddir()));
 
                 } catch (IOException e) {
                     e.printStackTrace();

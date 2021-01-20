@@ -1,22 +1,22 @@
 import javax.xml.bind.annotation.XmlElement;
 
 public class Measurement {
-    private String stn;
+    private int stn;
     private String date;
     private String time;
-    private String temp;
-    private String dewp;
-    private String stp;
-    private String slp;
-    private String visib;
-    private String wdsp;
-    private String prcp;
-    private String sndp;
+    private float temp;
+    private float dewp;
+    private float stp;
+    private float slp;
+    private float visib;
+    private float wdsp;
+    private float prcp;
+    private float sndp;
     private String frshtt;
-    private String cldc;
-    private String wnddir;
+    private float cldc;
+    private int wnddir;
 
-    public Measurement(String stn, String date, String time, String temp, String dewp, String stp, String slp, String visib, String wdsp, String prcp, String sndp, String frshtt, String cldc, String wnddir) {
+    public Measurement(int stn, String date, String time, float temp, float dewp, float stp, float slp, float visib, float wdsp, float prcp, float sndp, String frshtt, float cldc, int wnddir) {
         this.stn = stn;
         this.date = date;
         this.time = time;
@@ -38,11 +38,11 @@ public class Measurement {
     }
 
     @XmlElement(name = "STN")
-    public String getStn() {
+    public int getStn() {
         return stn;
     }
 
-    public void setStn(String stn) {
+    public void setStn(int stn) {
         this.stn = stn;
     }
 
@@ -65,74 +65,74 @@ public class Measurement {
     }
 
     @XmlElement(name = "TEMP")
-    public String getTemp() {
+    public float getTemp() {
         return temp;
     }
 
-    public void setTemp(String temp) {
+    public void setTemp(float temp) {
         this.temp = temp;
     }
 
     @XmlElement(name = "DEWP")
-    public String getDewp() {
+    public float getDewp() {
         return dewp;
     }
 
-    public void setDewp(String dewp) {
+    public void setDewp(float dewp) {
         this.dewp = dewp;
     }
 
     @XmlElement(name = "STP")
-    public String getStp() {
+    public float getStp() {
         return stp;
     }
 
-    public void setStp(String stp) {
+    public void setStp(float stp) {
         this.stp = stp;
     }
 
     @XmlElement(name = "SLP")
-    public String getSlp() {
+    public float getSlp() {
         return slp;
     }
 
-    public void setSlp(String slp) {
+    public void setSlp(float slp) {
         this.slp = slp;
     }
 
     @XmlElement(name = "VISIB")
-    public String getVisib() {
+    public float getVisib() {
         return visib;
     }
 
-    public void setVisib(String visib) {
+    public void setVisib(float visib) {
         this.visib = visib;
     }
 
     @XmlElement(name = "WDSP")
-    public String getWdsp() {
+    public float getWdsp() {
         return wdsp;
     }
 
-    public void setWdsp(String wdsp) {
+    public void setWdsp(float wdsp) {
         this.wdsp = wdsp;
     }
 
     @XmlElement(name = "PRCP")
-    public String getPrcp() {
+    public float getPrcp() {
         return prcp;
     }
 
-    public void setPrcp(String prcp) {
+    public void setPrcp(float prcp) {
         this.prcp = prcp;
     }
 
     @XmlElement(name = "SNDP")
-    public String getSndp() {
+    public float getSndp() {
         return sndp;
     }
 
-    public void setSndp(String sndp) {
+    public void setSndp(float sndp) {
         this.sndp = sndp;
     }
 
@@ -146,22 +146,23 @@ public class Measurement {
     }
 
     @XmlElement(name = "CLDC")
-    public String getCldc() {
+    public float getCldc() {
         return cldc;
     }
 
-    public void setCldc(String cldc) {
+    public void setCldc(float cldc) {
         this.cldc = cldc;
     }
 
     @XmlElement(name = "WNDDIR")
-    public String getWnddir() {
+    public int getWnddir() {
         return wnddir;
     }
 
-    public void setWnddir(String wnddir) {
+    public void setWnddir(int wnddir) {
         this.wnddir = wnddir;
     }
+
 
     @Override
     public String toString() {

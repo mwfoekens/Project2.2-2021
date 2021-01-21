@@ -65,7 +65,8 @@ class Worker implements Runnable {
      * @throws IOException had to add otherwise IntelliJ cries
      */
     private void addToQueue(WeatherData q) throws IOException, InterruptedException {
-        for (int i = 0; i < q.getMeasurements().size(); i++) {
+        int length = q.getMeasurements().size();
+        for (int i = 0; i < length; i++) {
             Measurement item = q.getMeasurements().get(i);
             if (compareData(item)) {
                 dataSaver.queue.add(item);
@@ -73,6 +74,13 @@ class Worker implements Runnable {
         }
     }
 
+    /**
+     * Parses data from .xml files.
+     *
+     * @param builder the builder
+     * @return returns WeatherData
+     * @throws JAXBException JAXBexception
+     */
     private WeatherData getWeatherData(StringBuilder builder) throws JAXBException {
         return (WeatherData) jaxbUnmarshaller.unmarshal(new ByteArrayInputStream(builder.toString().getBytes()));
     }
@@ -131,24 +139,28 @@ class Worker implements Runnable {
 
     /**
      * Compares the param field against the rest of the data using the standard deviation.
-     * Field has to be within a 3 times standard deviation.
+     * Field has to be within a 3 times standard deviation. If the standard deviation is 0, it returns the field as is.
      *
      * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
-     * @return returns the average value if false, returns the input value if true
+     * @return returns the average value if an outlier, returns the input value if within standard deviation range/
      */
     private float repairField(List<Float> data, float field) {
         float sum = 0;
+        float sqDiff = 0;
+        float avg;
+        double deviation;
+        int listSize = data.size();
 
         for (Float datum : data) {
             sum += datum;
         }
-        float avg = sum / data.size();
-        float sqDiff = 0;
+
+        avg = sum / listSize;
 
         for (Float datum : data) sqDiff += ((datum - avg) * (datum - avg));
 
-        var deviation = Math.sqrt(sqDiff / (data.size() - 1));
+        deviation = Math.sqrt(sqDiff / (listSize - 1));
 
         if (deviation == 0) {
             return field;
@@ -162,7 +174,7 @@ class Worker implements Runnable {
     }
 
     /**
-     * Checks if the data is within possible range.
+     * Checks if the first entry of a station is within possible range.
      *
      * @param measurement measurement unit
      * @return returns true if ALL are true. If one is false, something is wrong.

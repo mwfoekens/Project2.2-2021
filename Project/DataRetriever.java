@@ -35,6 +35,12 @@ public class DataRetriever {
         return Files.exists(path);
     }
 
+    /**
+     * Checks if .csv file in targetDir exists. (Necessity explained in compareData() in Worker class)
+     *
+     * @param targetDir targetDir should be a station number
+     * @return returns true if .csv file exists, false if it doesn't.
+     */
     boolean csvExists(Path targetDir){
         Path path = pathToDataDir.resolve(targetDir).resolve("Measurements.csv");
         return Files.exists(path);
@@ -151,6 +157,10 @@ public class DataRetriever {
      */
     ArrayList<Float> retrieveSndp(Path targetDir) throws IOException {
         return retrieveColumn(targetDir, row -> Float.parseFloat(row[10]));
+    }
+
+    ArrayList<String> retrieveFrshtt(Path targetDir) throws IOException {
+        return retrieveColumn(targetDir, row -> row[11]);
     }
 
     /**

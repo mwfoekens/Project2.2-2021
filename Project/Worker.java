@@ -15,8 +15,7 @@ class Worker implements Runnable {
     private final Socket connection;
     private final BufferedReader bufferedReader;
     private final Unmarshaller jaxbUnmarshaller;
-    //    private DBThread dbThread;
-    private DataSaver dataSaver;
+    private final DataSaver dataSaver;
 
     public Worker(Socket connection, DataSaver dataSaver) throws JAXBException, IOException {
         this.connection = connection;
@@ -79,18 +78,6 @@ class Worker implements Runnable {
     }
 
     /**
-     * Checks if any measurement fields are empty.
-     *
-     * @param measurement measurement that needs to be checked
-     * @deprecated replaced by compareData()
-     */
-    private void correctIfEmpty(Measurement measurement) {
-        if (measurement.getFrshtt().equals("")) {
-            measurement.setFrshtt("0");
-        }
-    }
-
-    /**
      * Data correcting method.
      *
      * @param measurement measurement that needs to be checked.
@@ -105,14 +92,14 @@ class Worker implements Runnable {
         if (!dataRetriever.dirExists(Path.of(String.valueOf(measurement.getStn())))) {
             return checkUltimateValues(measurement);
         } else {
-            // There are fringe cases where the directory exists, but the .csv doesn't exist yet. In this rare case,
-            // the thread must sleep and check again later if the .csv exists or not. The directory & .csv are created in
-            // the same place in class DataSaver, but it's possible that the thread in DataSaver gets interrupted before
-            // it gets to make the .csv, in which another thread might try to access the non-existent .csv file (which
-            // is something that happens below. The DataRetriever grabs values from the .csv, that, in this fringe case,
-            // might not exist yet.
+            // There are fringe cases where the directory exists, but the .csv doesn't exist yet (multithreading, am I right?).
+            // In this rare case, the thread must go idle and check again later if the .csv exists or not.
+            // The directory & .csv are created in the same place in class DataSaver, but it's possible that the thread
+            // in DataSaver gets interrupted before it gets to make the .csv, in which another thread might try to
+            // access the non-existent .csv file (which is something that happens below. The DataRetriever grabs values
+            // from the .csv, that, in this case, does not exist yet.
             // My point is, don't remove this while loop. Thanks.
-            while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))){
+            while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))) {
                 Thread.sleep(5);
             }
             List<Float> temp = dataRetriever.retrieveTemp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
@@ -135,12 +122,16 @@ class Worker implements Runnable {
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
             List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).map(Integer::floatValue).collect(Collectors.toList());
             measurement.setWnddir((int) Math.round(repairField(wnddir, measurement.getWnddir())));
+
+            // Different method because Frshtt is pretty irregular regarding the rest of the values.
+            measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
             return true;
         }
     }
 
     /**
-     * Compares the param field against the rest of the data. Field has to be within a 20% margin of the average.
+     * Compares the param field against the rest of the data using the standard deviation.
+     * Field has to be within a 3 times standard deviation.
      *
      * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
@@ -148,17 +139,25 @@ class Worker implements Runnable {
      */
     private float repairField(List<Float> data, float field) {
         float sum = 0;
+
         for (Float datum : data) {
             sum += datum;
         }
         float avg = sum / data.size();
-        float fieldMax = (float) (avg * 1.20);
-        float fieldMin = (float) (avg * 0.80);
+        float sqDiff = 0;
 
-        if (field > fieldMax || field < fieldMin) {
+        for (Float datum : data) sqDiff += ((datum - avg) * (datum - avg));
+
+        var deviation = Math.sqrt(sqDiff / (data.size() - 1));
+
+        if (deviation == 0) {
             return field;
         } else {
-            return avg;
+            if (field > (avg + 3 * deviation) || field < (avg - 3 * deviation)) {
+                return Math.round(avg * 100) / 100;
+            } else {
+                return field;
+            }
         }
     }
 
@@ -187,13 +186,27 @@ class Worker implements Runnable {
     /**
      * Method to check if value within range.
      *
-     * @param min minimum possible value
-     * @param max maximum possible value
+     * @param min   minimum possible value
+     * @param max   maximum possible value
      * @param value value of the data.
      * @return returns true if within range, false if outside range
      */
     private static boolean isBetween(float min, float max, float value) {
         return value > min && value < max;
+    }
+
+    /**
+     * Seperate function because Frshtt is such an irregular field.
+     *
+     * @param field field that needs to be corrected
+     * @return returns "000000" if empty, returns field if not empty.
+     */
+    private String repairFrshtt(String field) {
+        if (field.equals("")) {
+            return "000000";
+        } else {
+            return field;
+        }
     }
 }
 

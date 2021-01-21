@@ -4,6 +4,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 
+/**
+ * Main class
+ *
+ * @author Hanzehogeschool
+ * Heavily edited by Merel Foekens
+ * @version 2.0
+ */
 public class Main {
     public static final int PORT = 2500;
     private static final int maxnrofConnections = 800;

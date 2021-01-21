@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Creates new directories to save data in. Has a queue of Measurements, and writes to csv files.
  *
  * @author Merel Foekens
- * @author https://github.com/mwfoekens
  * @version 1.0
  */
 public class DataSaver implements Runnable {
@@ -37,6 +36,7 @@ public class DataSaver implements Runnable {
         }
     }
 
+
     /**
      * !!! Might have to change this method a bit more considering it's supposed to run on a separate VM. !!!
      * <p>
@@ -53,9 +53,9 @@ public class DataSaver implements Runnable {
                 if (!Files.exists(stnPath)) {
                     Files.createDirectory(stnPath);
                 }
-
                 // Writes to .csv file. Doesn't need to be flushed/closed, because try-with-resources takes care of that.
                 // Creates/appends to the .csv file.
+
                 try (FileWriter fileWriter = new FileWriter(String.valueOf(stnPath.resolve("Measurements.csv")), true)) {
 
                     writeCell(fileWriter, Integer.toString(values.getStn()));

@@ -1,5 +1,10 @@
 import javax.xml.bind.annotation.XmlElement;
 
+/**
+ * Class that holds measurement data
+ * @author Merel Foekens
+ * @version 1.0
+ */
 public class Measurement {
     private int stn;
     private String date;

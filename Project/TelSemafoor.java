@@ -1,3 +1,9 @@
+/**
+ * Keeps track of threads
+ *
+ * @author Hanzehogeschool
+ * Version 1.0
+ */
 public class TelSemafoor {
     // all honours to Edsgar Dijkstra
 

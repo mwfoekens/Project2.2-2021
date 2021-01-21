@@ -11,7 +11,6 @@ import java.util.function.Function;
  * Retrieves data from .csv files
  *
  * @author Merel Foekens
- * @author https://github.com/mwfoekens
  * @version 1
  */
 public class DataRetriever {

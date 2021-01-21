@@ -10,6 +10,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Parses data and adds data to the queue of the DataSaver.
+ *
+ * @author Hanzehogeschool
+ * Heavily edited by Merel Foekens
+ * @version 2.0
+ */
 
 class Worker implements Runnable {
     private final Socket connection;
@@ -28,8 +35,6 @@ class Worker implements Runnable {
     @Override
     public void run() {
         try {
-            //System.err.println("New worker thread started");
-
             //check if maximum number of connections reached
             Main.mijnSemafoor.probeer();
 
@@ -50,7 +55,7 @@ class Worker implements Runnable {
 
             // now close the socket connection
             connection.close();
-            //System.err.println("Connection closed: workerthread ending");
+
             // upping the semaphore.. since the connnection is gone....
             Main.mijnSemafoor.verhoog();
         } catch (IOException | InterruptedException | JAXBException e) {
@@ -94,6 +99,7 @@ class Worker implements Runnable {
      */
     private boolean compareData(Measurement measurement) throws IOException, InterruptedException {
 
+        // TODO CHANGE PATH
         DataRetriever dataRetriever = new DataRetriever(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"));
 
         // if the directory exists, the Measurements.csv file also exists.
@@ -106,7 +112,7 @@ class Worker implements Runnable {
             // in DataSaver gets interrupted before it gets to make the .csv, in which another thread might try to
             // access the non-existent .csv file (which is something that happens below. The DataRetriever grabs values
             // from the .csv, that, in this case, does not exist yet.
-            // My point is, don't remove this while loop. Thanks.
+            // My point is, don't remove this while loop.
             while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))) {
                 Thread.sleep(5);
             }
@@ -138,8 +144,8 @@ class Worker implements Runnable {
     }
 
     /**
-     * Compares the param field against the rest of the data using the standard deviation.
-     * Field has to be within a 3 times standard deviation. If the standard deviation is 0, it returns the field as is.
+     * Calculates the standard deviation from all other values, then compares the param field.
+     * Field has to be within 2 times the standard deviation. If the standard deviation is 0, it returns the field as is.
      *
      * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
@@ -162,10 +168,12 @@ class Worker implements Runnable {
 
         deviation = Math.sqrt(sqDiff / (listSize - 1));
 
+        // if deviation is 0, all entry points are the same value, which means there is no deviation.
         if (deviation == 0) {
             return field;
         } else {
-            if (field > (avg + 3 * deviation) || field < (avg - 3 * deviation)) {
+            if (field > (avg + 2 * deviation) || field < (avg - 2 * deviation)) {
+                // shenaningans to avoid too many decimals
                 return Math.round(avg * 100) / 100;
             } else {
                 return field;

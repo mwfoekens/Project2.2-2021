@@ -29,7 +29,7 @@ public class DataSaver implements Runnable {
 
         if (!Files.exists(Path.of(dataDir))) {
             Files.createDirectory(Path.of(dataDir));
-            System.out.println("Directory successfully created.");
+            System.out.println("Directory successfully created at "+ dirPath);
         } else {
             System.err.println("Directory with name \"" + dataDir + "\" already exists. If existing directory is not" +
                     " correct, QUIT application immediately.");
@@ -53,9 +53,9 @@ public class DataSaver implements Runnable {
                 if (!Files.exists(stnPath)) {
                     Files.createDirectory(stnPath);
                 }
+
                 // Writes to .csv file. Doesn't need to be flushed/closed, because try-with-resources takes care of that.
                 // Creates/appends to the .csv file.
-
                 try (FileWriter fileWriter = new FileWriter(String.valueOf(stnPath.resolve("Measurements.csv")), true)) {
 
                     writeCell(fileWriter, Integer.toString(values.getStn()));
@@ -71,7 +71,7 @@ public class DataSaver implements Runnable {
                     writeCell(fileWriter, Float.toString(values.getSndp()));
                     writeCell(fileWriter, values.getFrshtt());
                     writeCell(fileWriter, Float.toString(values.getCldc()));
-                    writeCellnl(fileWriter, Integer.toString(values.getWnddir()));
+                    writeCellNl(fileWriter, Integer.toString(values.getWnddir()));
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -85,7 +85,7 @@ public class DataSaver implements Runnable {
     /**
      * Helper function to make code more readable. Adds comma after data.
      *
-     * @param fileWriter filewriter that writes to .csv
+     * @param fileWriter file writer that writes to .csv
      * @param input what to add to the .csv
      * @throws IOException had to add otherwise intelliJ cries
      */
@@ -94,13 +94,13 @@ public class DataSaver implements Runnable {
     }
 
     /**
-     * Helper function to make code more readable. Adds newline after data.
+     * Helper function to make code more readable. Adds a new line after data.
      *
-     * @param fileWriter filewriter that writes to .csv
+     * @param fileWriter file writer that writes to .csv
      * @param input input what to add to the .csv
      * @throws IOException had to add otherwise intelliJ cries
      */
-    private void writeCellnl(FileWriter fileWriter, String input) throws IOException {
+    private void writeCellNl(FileWriter fileWriter, String input) throws IOException {
         fileWriter.append(input).append("\n");
     }
 }

@@ -11,7 +11,7 @@ import java.util.function.Function;
  * Retrieves data from .csv files
  *
  * @author Merel Foekens
- * @version 1
+ * @version 1.0
  */
 public class DataRetriever {
     private final Path pathToDataDir;
@@ -45,7 +45,7 @@ public class DataRetriever {
         return Files.exists(path);
     }
 
-    //    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
+//    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
 //    Top 10 air pressure of all stations in Kenya and Djibouti
     //KENYA STATION NR
     //636950
@@ -68,6 +68,8 @@ public class DataRetriever {
     //DJIBOUTI STATION NR
     //631260
     //631250
+
+
 
     /**
      * Retrieve temperature

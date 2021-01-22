@@ -23,6 +23,7 @@ class Worker implements Runnable {
     private final BufferedReader bufferedReader;
     private final Unmarshaller jaxbUnmarshaller;
     private final DataSaver dataSaver;
+    private boolean running = true;
 
     public Worker(Socket connection, DataSaver dataSaver) throws JAXBException, IOException {
         this.connection = connection;
@@ -38,28 +39,38 @@ class Worker implements Runnable {
             //check if maximum number of connections reached
             Main.mijnSemafoor.probeer();
 
-            StringBuilder builder = null;
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                if (line.startsWith("<?xml")) {
-                    if (builder != null) {
-                        WeatherData q = getWeatherData(builder);
-                        addToQueue(q);
+            // keeps connection open while theres still input, closes if builder outside of while loop is still null
+            while (running) {
+                StringBuilder builder = null;
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    if (line.startsWith("<?xml")) {
+                        if (builder != null) {
+                            WeatherData q = getWeatherData(builder);
+                            addToQueue(q);
+                        }
+                        builder = new StringBuilder();
                     }
-                    builder = new StringBuilder();
+                    builder.append(line);
                 }
-                builder.append(line);
+                if (builder == null) {
+                    running = false;
+                } else {
+                    WeatherData q = getWeatherData(builder);
+                    addToQueue(q);
+                }
             }
-            WeatherData q = getWeatherData(builder);
-            addToQueue(q);
-
-            // now close the socket connection
-            connection.close();
-
-            // upping the semaphore.. since the connnection is gone....
-            Main.mijnSemafoor.verhoog();
         } catch (IOException | InterruptedException | JAXBException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                // Close socket
+                connection.close();
+                // Up semaphore
+                Main.mijnSemafoor.verhoog();
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -73,6 +84,7 @@ class Worker implements Runnable {
         int length = q.getMeasurements().size();
         for (int i = 0; i < length; i++) {
             Measurement item = q.getMeasurements().get(i);
+
             if (compareData(item)) {
                 dataSaver.queue.add(item);
             }
@@ -109,33 +121,32 @@ class Worker implements Runnable {
             // There are fringe cases where the directory exists, but the .csv doesn't exist yet (multithreading, am I right?).
             // In this rare case, the thread must go idle and check again later if the .csv exists or not.
             // The directory & .csv are created in the same place in class DataSaver, but it's possible that the thread
-            // in DataSaver gets interrupted before it gets to make the .csv, in which another thread might try to
-            // access the non-existent .csv file (which is something that happens below. The DataRetriever grabs values
-            // from the .csv, that, in this case, does not exist yet.
+            // in DataSaver gets interrupted before it gets to make the .csv, and another thread might try to
+            // access a non-existent .csv file (which is something that happens below due to the DataRetriever).
             // My point is, don't remove this while loop.
             while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))) {
                 Thread.sleep(5);
             }
-            List<Float> temp = dataRetriever.retrieveTemp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> temp = dataRetriever.retrieveTemp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setTemp(repairField(temp, measurement.getTemp()));
-            List<Float> dewp = dataRetriever.retrieveDewp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> dewp = dataRetriever.retrieveDewp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setDewp(repairField(dewp, measurement.getDewp()));
-            List<Float> stp = dataRetriever.retrieveStp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> stp = dataRetriever.retrieveStp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setStp(repairField(stp, measurement.getStp()));
-            List<Float> slp = dataRetriever.retrieveSlp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> slp = dataRetriever.retrieveSlp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setSlp(repairField(slp, measurement.getSlp()));
-            List<Float> visib = dataRetriever.retrieveVisib(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> visib = dataRetriever.retrieveVisib(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setVisib(repairField(visib, measurement.getVisib()));
-            List<Float> wdsp = dataRetriever.retrieveWdsp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> wdsp = dataRetriever.retrieveWdsp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setWdsp(repairField(wdsp, measurement.getWdsp()));
-            List<Float> prcp = dataRetriever.retrievePrcp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> prcp = dataRetriever.retrievePrcp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setPrcp(repairField(prcp, measurement.getPrcp()));
-            List<Float> sndp = dataRetriever.retrieveSndp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> sndp = dataRetriever.retrieveSndp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setSndp(repairField(sndp, measurement.getSndp()));
-            List<Float> cldc = dataRetriever.retrieveCldc(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).collect(Collectors.toList());
+            List<Float> cldc = dataRetriever.retrieveCldc(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
-            List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(10).map(Integer::floatValue).collect(Collectors.toList());
-            measurement.setWnddir((int) Math.round(repairField(wnddir, measurement.getWnddir())));
+            List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).map(Integer::floatValue).collect(Collectors.toList());
+            measurement.setWnddir(Math.round(repairField(wnddir, measurement.getWnddir())));
 
             // Different method because Frshtt is pretty irregular regarding the rest of the values.
             measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
@@ -174,7 +185,7 @@ class Worker implements Runnable {
         } else {
             if (field > (avg + 2 * deviation) || field < (avg - 2 * deviation)) {
                 // shenaningans to avoid too many decimals
-                return Math.round(avg * 100) / 100;
+                return (float) Math.round(avg * 100) / 100;
             } else {
                 return field;
             }
@@ -197,10 +208,14 @@ class Worker implements Runnable {
         //SNDP 0, 193
         //PRCP 0, 187
 
-        return isBetween(-100, 70, measurement.getTemp()) && isBetween(-100, 50, measurement.getDewp())
-                && isBetween(700, 1200, measurement.getSlp()) && isBetween(0, 360, measurement.getWnddir())
-                && isBetween(0, 407, measurement.getWdsp()) && isBetween(0, (float) 99.9, measurement.getCldc()) &&
-                isBetween(0, 193, measurement.getSndp()) && isBetween(0, 187, measurement.getPrcp());
+        return isBetween(-100, 70, measurement.getTemp()) &&
+                isBetween(-100, 50, measurement.getDewp()) &&
+                isBetween(700, 1200, measurement.getSlp()) &&
+                isBetween(0, 360, measurement.getWnddir()) &&
+                isBetween(0, 407, measurement.getWdsp()) &&
+                isBetween(0, (float) 99.9, measurement.getCldc()) &&
+                isBetween(0, 193, measurement.getSndp()) &&
+                isBetween(0, 187, measurement.getPrcp());
     }
 
     /**
@@ -212,7 +227,7 @@ class Worker implements Runnable {
      * @return returns true if within range, false if outside range
      */
     private static boolean isBetween(float min, float max, float value) {
-        return value > min && value < max;
+        return value >= min && value <= max;
     }
 
     /**

@@ -60,7 +60,7 @@ class Worker implements Runnable {
                     addToQueue(q);
                 }
             }
-        } catch (IOException | InterruptedException | JAXBException e) {
+        } catch (IOException | InterruptedException | JAXBException | NoSuchFieldException e) {
             e.printStackTrace();
         } finally {
             try {
@@ -80,12 +80,12 @@ class Worker implements Runnable {
      * @param q an entire weather data unit
      * @throws IOException had to add otherwise IntelliJ cries
      */
-    private void addToQueue(WeatherData q) throws IOException, InterruptedException {
+    private void addToQueue(WeatherData q) throws IOException, InterruptedException, NoSuchFieldException {
         int length = q.getMeasurements().size();
         for (int i = 0; i < length; i++) {
             Measurement item = q.getMeasurements().get(i);
 
-            if (compareData(item)) {
+            if (repairData(item)) {
                 dataSaver.queue.add(item);
             }
         }
@@ -106,10 +106,10 @@ class Worker implements Runnable {
      * Data correcting method.
      *
      * @param measurement measurement that needs to be checked.
-     * @return returns whether measurement should be added. (Is only false if it's the first measurement of that station and not within proper ranges).
+     * @return returns whether measurement should be added. (Only false if it's the first measurement of that station and not within acceptable ranges).
      * @throws IOException had to add otherwise IntelliJ cries
      */
-    private boolean compareData(Measurement measurement) throws IOException, InterruptedException {
+    private static boolean repairData(Measurement measurement) throws IOException, InterruptedException, NoSuchFieldException {
 
         // TODO CHANGE PATH
         DataRetriever dataRetriever = new DataRetriever(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"));
@@ -143,26 +143,28 @@ class Worker implements Runnable {
             measurement.setPrcp(repairField(prcp, measurement.getPrcp()));
             List<Float> sndp = dataRetriever.retrieveSndp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setSndp(repairField(sndp, measurement.getSndp()));
+
+            // Different method because Frshtt is pretty irregular regarding the rest of the values.
+            measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
+
             List<Float> cldc = dataRetriever.retrieveCldc(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
             List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).map(Integer::floatValue).collect(Collectors.toList());
             measurement.setWnddir(Math.round(repairField(wnddir, measurement.getWnddir())));
 
-            // Different method because Frshtt is pretty irregular regarding the rest of the values.
-            measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
             return true;
         }
     }
 
     /**
-     * Calculates the standard deviation from all other values, then compares the param field.
-     * Field has to be within 2 times the standard deviation. If the standard deviation is 0, it returns the field as is.
+     * Calculates the standard deviation from all previous values, and compares the param field to the calculated deviation.
+     * Field has to be within 2 times the standard deviation. If the standard deviation is 0, the field gets returned as is.
      *
      * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
      * @return returns the average value if an outlier, returns the input value if within standard deviation range/
      */
-    private float repairField(List<Float> data, float field) {
+    private static float repairField(List<Float> data, float field) {
         float sum = 0;
         float sqDiff = 0;
         float avg;
@@ -193,12 +195,13 @@ class Worker implements Runnable {
     }
 
     /**
-     * Checks if the first entry of a station is within possible range.
+     * Checks if the fields of the first entry of a station are within acceptable ranges.
      *
      * @param measurement measurement unit
      * @return returns true if ALL are true. If one is false, something is wrong.
      */
-    private boolean checkUltimateValues(Measurement measurement) {
+    private static boolean checkUltimateValues(Measurement measurement) {
+        // Acceptable ranges for all relevant measurement fields
         //TEMP -100, 70
         //DEWP -100, 50
         //SLP 700, 1200
@@ -219,7 +222,7 @@ class Worker implements Runnable {
     }
 
     /**
-     * Method to check if value within range.
+     * Method to check if singular field is within acceptable range.
      *
      * @param min   minimum possible value
      * @param max   maximum possible value
@@ -231,12 +234,12 @@ class Worker implements Runnable {
     }
 
     /**
-     * Seperate function because Frshtt is such an irregular field.
+     * Seperate repair function for the Frshtt field it is irregular compared to the other fields.
      *
      * @param field field that needs to be corrected
      * @return returns "000000" if empty, returns field if not empty.
      */
-    private String repairFrshtt(String field) {
+    private static String repairFrshtt(String field) {
         if (field.equals("")) {
             return "000000";
         } else {

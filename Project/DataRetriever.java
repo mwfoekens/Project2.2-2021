@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -16,10 +17,10 @@ import java.util.function.Function;
 public class DataRetriever {
     private final Path pathToDataDir;
 
-    public DataRetriever(Path pathToDataDir) {
+    public DataRetriever(Path pathToDataDir) throws NoSuchFieldException {
         this.pathToDataDir = pathToDataDir;
         if (!Files.exists(pathToDataDir)) {
-            System.err.println("Directory does not exist. Path: " + pathToDataDir);
+            throw new NoSuchFieldException("Directory does not exist. Path: " + pathToDataDir);
         }
     }
 
@@ -188,7 +189,7 @@ public class DataRetriever {
 
     private <R> ArrayList<R> retrieveColumn(Path targetDir, Function<String[], R> get) throws IOException {
         if (!dirExists(targetDir)) {
-            throw new IOException("Target directory " + targetDir + " does not exist");
+            throw new NoSuchFileException("Target directory " + targetDir + " does not exist");
         } else {
             try (BufferedReader bufferedReader = new BufferedReader(
                     new FileReader(String.valueOf(pathToDataDir.resolve(targetDir).resolve("Measurements.csv"))))) {

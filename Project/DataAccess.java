@@ -3,6 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
 public class DataAccess {
@@ -13,7 +14,7 @@ public class DataAccess {
 
     public DataAccess(Path pathToDataDir, int stnId, int cacheSize) throws IOException {
         this.cacheSize = cacheSize;
-        cache = new LinkedList<>();
+        cache = new ConcurrentLinkedDeque<>();
 
         if (!Files.exists(pathToDataDir)) {
             throw new NoSuchFileException(pathToDataDir + " does not exist.");
@@ -76,7 +77,7 @@ public class DataAccess {
         }
     }
 
-    synchronized List<Measurement> readCache() {
+    List<Measurement> readCache() {
         return new ArrayList<>(cache);
     }
 
@@ -102,7 +103,7 @@ public class DataAccess {
         fileWriter.append(input).append("\n");
     }
 
-    synchronized boolean hasMeasurements(){
+    boolean hasMeasurements(){
         return !cache.isEmpty();
     }
 

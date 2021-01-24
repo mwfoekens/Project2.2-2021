@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -21,17 +22,17 @@ class Worker implements Runnable {
     private final Socket connection;
     private final BufferedReader bufferedReader;
     private final Unmarshaller jaxbUnmarshaller;
-    private final DataSaver dataSaver;
     private boolean running = true;
     private final DataAccessFactory dataAccessFactory;
+    private final Executor executor;
 
-    public Worker(Socket connection, DataSaver dataSaver, DataAccessFactory dataAccessFactory) throws JAXBException, IOException {
+    public Worker(Socket connection, DataAccessFactory dataAccessFactory, Executor executor) throws JAXBException, IOException {
         this.connection = connection;
         this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         JAXBContext jaxbContext = JAXBContext.newInstance(WeatherData.class);
         this.jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        this.dataSaver = dataSaver;
         this.dataAccessFactory = dataAccessFactory;
+        this.executor = executor;
     }
 
     @Override
@@ -76,7 +77,7 @@ class Worker implements Runnable {
     }
 
     /**
-     * compares entirety of the weatherdata unit, adds to the queue of DataSaver.java
+     * Compares entirety of the WeatherData unit, adds to the executor service
      *
      * @param q an entire weather data unit
      * @throws IOException had to add otherwise IntelliJ cries
@@ -87,7 +88,7 @@ class Worker implements Runnable {
             Measurement item = q.getMeasurements().get(i);
 
             if (repairData(item)) {
-                dataSaver.queue.add(item);
+                executor.execute(() -> dataAccessFactory.getForStation(item.getStn()).writeRow(item));
             }
         }
     }

@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Main class
@@ -20,19 +22,14 @@ public class Main {
         Socket connection;
         // TODO CHANGE dirPATH TO SHARED FILESYSTEM!!!
         DataAccessFactory dataAccessFactory = new DataAccessFactory(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"), 20);
-        DataSaver dataSaver = new DataSaver(dataAccessFactory);
-        Thread dataThread = new Thread(dataSaver);
-        dataThread.start();
-        Thread dataThread2 = new Thread(dataSaver);
-        dataThread2.start();
+        Executor executor = Executors.newCachedThreadPool();
 
         ServerSocket server = new ServerSocket(PORT);
         System.err.println("Server started. Maximum amount of threads: " + maxnrofConnections);
 
         while (true) {
             connection = server.accept();
-            //System.err.println("New connection accepted..handing it over to worker thread");
-            Thread worker = new Thread(new Worker(connection, dataSaver, dataAccessFactory));
+            Thread worker = new Thread(new Worker(connection, dataAccessFactory, executor));
             worker.start();
         }
     }

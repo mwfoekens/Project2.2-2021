@@ -1,4 +1,5 @@
 import javax.xml.bind.annotation.XmlElement;
+import java.util.List;
 
 /**
  * Class that holds measurement data
@@ -38,7 +39,24 @@ public class Measurement {
         this.wnddir = wnddir;
     }
 
-    public Measurement() {
+    public Measurement(List<String> list) {
+        this.stn = Integer.parseInt(list.get(0));
+        this.date = list.get(1);
+        this.time = list.get(2);
+        this.temp = Float.parseFloat(list.get(3));
+        this.dewp = Float.parseFloat(list.get(4));
+        this.stp = Float.parseFloat(list.get(5));
+        this.slp = Float.parseFloat(list.get(6));
+        this.visib = Float.parseFloat(list.get(7));
+        this.wdsp = Float.parseFloat(list.get(8));
+        this.prcp = Float.parseFloat(list.get(9));
+        this.sndp = Float.parseFloat(list.get(10));
+        this.frshtt = list.get(11);
+        this.cldc = Float.parseFloat(list.get(12));
+        this.wnddir = Integer.parseInt(list.get(13));
+    }
+
+    public Measurement(){
 
     }
 

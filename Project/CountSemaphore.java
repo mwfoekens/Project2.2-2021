@@ -4,13 +4,13 @@
  * @author Hanzehogeschool
  * Version 1.0
  */
-public class TelSemafoor {
+public class CountSemaphore {
     // all honours to Edsgar Dijkstra
 
     private int max = 0;
     private int waarde = 0;
 
-    public TelSemafoor(int Getal) {
+    public CountSemaphore(int Getal) {
         this.max = Getal;
         this.waarde = Getal;
     }

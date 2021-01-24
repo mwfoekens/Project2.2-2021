@@ -6,7 +6,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,20 +23,22 @@ class Worker implements Runnable {
     private final Unmarshaller jaxbUnmarshaller;
     private final DataSaver dataSaver;
     private boolean running = true;
+    private final DataAccessFactory dataAccessFactory;
 
-    public Worker(Socket connection, DataSaver dataSaver) throws JAXBException, IOException {
+    public Worker(Socket connection, DataSaver dataSaver, DataAccessFactory dataAccessFactory) throws JAXBException, IOException {
         this.connection = connection;
         this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         JAXBContext jaxbContext = JAXBContext.newInstance(WeatherData.class);
         this.jaxbUnmarshaller = jaxbContext.createUnmarshaller();
         this.dataSaver = dataSaver;
+        this.dataAccessFactory = dataAccessFactory;
     }
 
     @Override
     public void run() {
         try {
             //check if maximum number of connections reached
-            Main.mijnSemafoor.probeer();
+            Main.semaphore.probeer();
 
             // keeps connection open while theres still input, closes if builder outside of while loop is still null
             while (running) {
@@ -67,7 +68,7 @@ class Worker implements Runnable {
                 // Close socket
                 connection.close();
                 // Up semaphore
-                Main.mijnSemafoor.verhoog();
+                Main.semaphore.verhoog();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -109,47 +110,45 @@ class Worker implements Runnable {
      * @return returns whether measurement should be added. (Only false if it's the first measurement of that station and not within acceptable ranges).
      * @throws IOException had to add otherwise IntelliJ cries
      */
-    private static boolean repairData(Measurement measurement) throws IOException, InterruptedException, NoSuchFieldException {
-
-        // TODO CHANGE PATH
-        DataRetriever dataRetriever = new DataRetriever(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"));
+    private boolean repairData(Measurement measurement) {
 
         // if the directory exists, the Measurements.csv file also exists.
-        if (!dataRetriever.dirExists(Path.of(String.valueOf(measurement.getStn())))) {
+        if (dataAccessFactory.getForStation(measurement.getStn()).hasMeasurements()) {
             return checkUltimateValues(measurement);
         } else {
-            // There are fringe cases where the directory exists, but the .csv doesn't exist yet (multithreading, am I right?).
-            // In this rare case, the thread must go idle and check again later if the .csv exists or not.
-            // The directory & .csv are created in the same place in class DataSaver, but it's possible that the thread
-            // in DataSaver gets interrupted before it gets to make the .csv, and another thread might try to
-            // access a non-existent .csv file (which is something that happens below due to the DataRetriever).
-            // My point is, don't remove this while loop.
-            while (!dataRetriever.csvExists(Path.of(String.valueOf(measurement.getStn())))) {
-                Thread.sleep(5);
-            }
-            List<Float> temp = dataRetriever.retrieveTemp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+            List<Measurement> measurements = dataAccessFactory.getForStation(measurement.getStn()).readCache();
+
+            List<Float> temp = measurements.stream().map(Measurement::getTemp).collect(Collectors.toList());
             measurement.setTemp(repairField(temp, measurement.getTemp()));
-            List<Float> dewp = dataRetriever.retrieveDewp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> dewp = measurements.stream().map(Measurement::getDewp).collect(Collectors.toList());
             measurement.setDewp(repairField(dewp, measurement.getDewp()));
-            List<Float> stp = dataRetriever.retrieveStp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> stp = measurements.stream().map(Measurement::getStp).collect(Collectors.toList());
             measurement.setStp(repairField(stp, measurement.getStp()));
-            List<Float> slp = dataRetriever.retrieveSlp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> slp = measurements.stream().map(Measurement::getSlp).collect(Collectors.toList());
             measurement.setSlp(repairField(slp, measurement.getSlp()));
-            List<Float> visib = dataRetriever.retrieveVisib(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> visib = measurements.stream().map(Measurement::getVisib).collect(Collectors.toList());
             measurement.setVisib(repairField(visib, measurement.getVisib()));
-            List<Float> wdsp = dataRetriever.retrieveWdsp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> wdsp = measurements.stream().map(Measurement::getWdsp).collect(Collectors.toList());
             measurement.setWdsp(repairField(wdsp, measurement.getWdsp()));
-            List<Float> prcp = dataRetriever.retrievePrcp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> prcp = measurements.stream().map(Measurement::getPrcp).collect(Collectors.toList());
             measurement.setPrcp(repairField(prcp, measurement.getPrcp()));
-            List<Float> sndp = dataRetriever.retrieveSndp(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+
+            List<Float> sndp = measurements.stream().map(Measurement::getSndp).collect(Collectors.toList());
             measurement.setSndp(repairField(sndp, measurement.getSndp()));
 
             // Different method because Frshtt is pretty irregular regarding the rest of the values.
             measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
 
-            List<Float> cldc = dataRetriever.retrieveCldc(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).collect(Collectors.toList());
+            List<Float> cldc = measurements.stream().map(Measurement::getCldc).collect(Collectors.toList());
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
-            List<Float> wnddir = dataRetriever.retrieveWnddir(Path.of(String.valueOf(measurement.getStn()))).stream().limit(20).map(Integer::floatValue).collect(Collectors.toList());
+
+            List<Float> wnddir = measurements.stream().map(Measurement::getWnddir).map(Integer::floatValue).collect(Collectors.toList());
             measurement.setWnddir(Math.round(repairField(wnddir, measurement.getWnddir())));
 
             return true;

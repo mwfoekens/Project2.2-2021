@@ -15,8 +15,8 @@ import java.util.concurrent.Executors;
  */
 public class Main {
     public static final int PORT = 2500;
-    private static final int maxnrofConnections = 800;
-    public static CountSemaphore semaphore = new CountSemaphore(maxnrofConnections);
+    private static final int MAXNROF_CONNECTIONS = 800;
+    public static CountSemaphore semaphore = new CountSemaphore(MAXNROF_CONNECTIONS);
 
     public static void main(String[] args) throws JAXBException, IOException {
         Socket connection;
@@ -25,7 +25,7 @@ public class Main {
         Executor executor = Executors.newCachedThreadPool();
 
         ServerSocket server = new ServerSocket(PORT);
-        System.err.println("Server started. Maximum amount of threads: " + maxnrofConnections);
+        System.err.println("Server started. Maximum amount of threads: " + MAXNROF_CONNECTIONS);
 
         while (true) {
             connection = server.accept();

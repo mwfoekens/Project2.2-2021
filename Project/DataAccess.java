@@ -6,30 +6,50 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
+/**
+ * Exists for each station number. Both retrieves & saves data from CSV file.
+ *
+ * @author Merel Foekens
+ * @version 1.0
+ */
 public class DataAccess {
     private final int cacheSize;
     private final Path filepath;
     private final Deque<Measurement> cache;
 
-
-    public DataAccess(Path pathToDataDir, int stnId, int cacheSize) throws IOException {
+    /**
+     * @param pathToDataDir Directory where all station numbers should be stored
+     * @param stn           Station number
+     * @param cacheSize     size of the cache
+     * @throws IOException IOException to make IntelliJ & Java happy
+     */
+    public DataAccess(Path pathToDataDir, int stn, int cacheSize) throws IOException {
         this.cacheSize = cacheSize;
         cache = new ConcurrentLinkedDeque<>();
 
         if (!Files.exists(pathToDataDir)) {
             throw new NoSuchFileException(pathToDataDir + " does not exist.");
         }
-        Path stnPath = pathToDataDir.resolve(Integer.toString(stnId));
+
+        Path stnPath = pathToDataDir.resolve(Integer.toString(stn));
+
         if (!Files.exists(stnPath)) {
             Files.createDirectory(stnPath);
         }
 
         filepath = stnPath;
+
+        // read all data and load it into cache.
         List<Measurement> allRows = readAll();
         Collections.reverse(allRows);
         cache.addAll(allRows.stream().limit(cacheSize).collect(Collectors.toList()));
     }
 
+    /**
+     * Updates cache, and writes to the CSV file.
+     *
+     * @param values a Measurement.
+     */
     synchronized void writeRow(Measurement values) {
         cache.addLast(values);
 
@@ -61,12 +81,19 @@ public class DataAccess {
         }
     }
 
+    /**
+     * Reads all lines in a CSV file. Transforms each line to a Measurement Object
+     *
+     * @return Returns a list of all rows.
+     * @throws IOException IOException to make IntelliJ & Java happy
+     */
     synchronized List<Measurement> readAll() throws IOException {
         try {
             List<Measurement> allRows = new ArrayList<>();
             BufferedReader bufferedReader = new BufferedReader(new FileReader(String.valueOf(filepath.resolve("Measurements.csv"))));
             String line;
             List<String> data;
+
             while ((line = bufferedReader.readLine()) != null) {
                 data = Arrays.asList(line.split(","));
                 allRows.add(new Measurement(data));
@@ -77,6 +104,11 @@ public class DataAccess {
         }
     }
 
+    /**
+     * Prints cache
+     *
+     * @return Returns the cache in an ArrayList
+     */
     List<Measurement> readCache() {
         return new ArrayList<>(cache);
     }
@@ -103,32 +135,12 @@ public class DataAccess {
         fileWriter.append(input).append("\n");
     }
 
-    boolean hasMeasurements(){
+    /**
+     * Checks if there's measurements available.
+     *
+     * @return Returns false if cache is empty, returns true if there's object in cache
+     */
+    boolean hasMeasurements() {
         return !cache.isEmpty();
     }
-
-    //    Windspeed and wind direction of all stations within 1500 km range of Nairobi (so also at sea)
-//    Top 10 air pressure of all stations in Kenya and Djibouti
-    //KENYA STATION NR
-    //636950
-    //637140
-    //637090
-    //637080
-    //637230
-    //637200
-    //637400 NAIROBI
-    //637660
-    //637930
-    //638200
-    //636120
-    //636410
-    //636190
-    //636240
-    //636610
-    //636860
-    //636710
-    //DJIBOUTI STATION NR
-    //631260
-    //631250
-
 }

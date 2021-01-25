@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
- * Parses data and adds data to the queue of the DataSaver.
+ * Parses & corrects data and adds data to the queue of an Executor
  *
  * @author Hanzehogeschool
  * Heavily edited by Merel Foekens
@@ -26,6 +26,15 @@ class Worker implements Runnable {
     private final DataAccessFactory dataAccessFactory;
     private final Executor executor;
 
+    /**
+     * Constructor
+     *
+     * @param connection        Socket Object
+     * @param dataAccessFactory DataAccessFactory Object
+     * @param executor          Executor Object
+     * @throws JAXBException JAXBException
+     * @throws IOException   IOException
+     */
     public Worker(Socket connection, DataAccessFactory dataAccessFactory, Executor executor) throws JAXBException, IOException {
         this.connection = connection;
         this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -35,6 +44,9 @@ class Worker implements Runnable {
         this.executor = executor;
     }
 
+    /**
+     * Run method. Keeps connection open while there's still data to be read.
+     */
     @Override
     public void run() {
         try {
@@ -45,8 +57,10 @@ class Worker implements Runnable {
             while (running) {
                 StringBuilder builder = null;
                 String line;
+
                 while ((line = bufferedReader.readLine()) != null) {
                     if (line.startsWith("<?xml")) {
+
                         if (builder != null) {
                             WeatherData q = getWeatherData(builder);
                             addToQueue(q);
@@ -55,6 +69,7 @@ class Worker implements Runnable {
                     }
                     builder.append(line);
                 }
+
                 if (builder == null) {
                     running = false;
                 } else {
@@ -84,6 +99,7 @@ class Worker implements Runnable {
      */
     private void addToQueue(WeatherData q) throws IOException, InterruptedException, NoSuchFieldException {
         int length = q.getMeasurements().size();
+
         for (int i = 0; i < length; i++) {
             Measurement item = q.getMeasurements().get(i);
 
@@ -94,7 +110,7 @@ class Worker implements Runnable {
     }
 
     /**
-     * Parses data from .xml files.
+     * Parses data from XML files.
      *
      * @param builder the builder
      * @return returns WeatherData
@@ -109,16 +125,17 @@ class Worker implements Runnable {
      *
      * @param measurement measurement that needs to be checked.
      * @return returns whether measurement should be added. (Only false if it's the first measurement of that station and not within acceptable ranges).
-     * @throws IOException had to add otherwise IntelliJ cries
      */
     private boolean repairData(Measurement measurement) {
-
         // if the directory exists, the Measurements.csv file also exists.
         if (dataAccessFactory.getForStation(measurement.getStn()).hasMeasurements()) {
             return checkUltimateValues(measurement);
+
         } else {
+            // Grabs the cache for the station number
             List<Measurement> measurements = dataAccessFactory.getForStation(measurement.getStn()).readCache();
 
+            // Puts the cahce in a list that can be used by the repairField() method.
             List<Float> temp = measurements.stream().map(Measurement::getTemp).collect(Collectors.toList());
             measurement.setTemp(repairField(temp, measurement.getTemp()));
 

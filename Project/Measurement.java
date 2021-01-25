@@ -3,6 +3,7 @@ import java.util.List;
 
 /**
  * Class that holds measurement data
+ *
  * @author Merel Foekens
  * @version 1.0
  */
@@ -56,7 +57,7 @@ public class Measurement {
         this.wnddir = Integer.parseInt(list.get(13));
     }
 
-    public Measurement(){
+    public Measurement() {
 
     }
 

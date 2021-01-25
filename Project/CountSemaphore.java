@@ -16,18 +16,14 @@ public class CountSemaphore {
     }
 
     public synchronized void probeer() throws InterruptedException {
-        //System.err.println("Probeer aangeroepen...");
         while (this.waarde <= 0) wait();
         this.waarde--;
-        //System.err.println("Probeer gelukt...");
         this.notify();
     }
 
     public synchronized void verhoog() throws InterruptedException {
-        //System.err.println("Verhoog aangeroepen...");
         while (this.waarde >= max) wait();
         this.waarde++;
-        //System.err.println("Verhoog gelukt...");
         this.notify();
     }
 }

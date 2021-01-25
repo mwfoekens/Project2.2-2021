@@ -14,18 +14,19 @@ import java.util.concurrent.Executors;
  * @version 2.0
  */
 public class Main {
-    public static final int PORT = 2500;
+    public static int PORT;
     private static final int MAXNROF_CONNECTIONS = 800;
     public static CountSemaphore semaphore = new CountSemaphore(MAXNROF_CONNECTIONS);
 
     public static void main(String[] args) throws JAXBException, IOException {
         Socket connection;
-        // TODO CHANGE dirPATH TO SHARED FILESYSTEM!!!
-        DataAccessFactory dataAccessFactory = new DataAccessFactory(Path.of("D:\\Programmershit\\Project2.2-2021\\Data"), 20);
+        DataAccessFactory dataAccessFactory = new DataAccessFactory(Path.of(args[0]), Integer.parseInt(args[1]));
         Executor executor = Executors.newCachedThreadPool();
 
+        PORT = Integer.parseInt(args[2]);
         ServerSocket server = new ServerSocket(PORT);
-        System.err.println("Server started. Maximum amount of threads: " + MAXNROF_CONNECTIONS);
+        System.err.println("Server started.\nMaximum amount of threads: " + MAXNROF_CONNECTIONS +
+                "\nListening on port: " + PORT + "\nCache size: " + args[1]);
 
         while (true) {
             connection = server.accept();

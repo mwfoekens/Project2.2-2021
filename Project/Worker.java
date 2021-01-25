@@ -161,7 +161,8 @@ class Worker implements Runnable {
             measurement.setSndp(repairField(sndp, measurement.getSndp()));
 
             // Different method because Frshtt is pretty irregular regarding the rest of the values.
-            measurement.setFrshtt(repairFrshtt(measurement.getFrshtt()));
+            List<String> frshtt = measurements.stream().map(Measurement::getFrshtt).collect(Collectors.toList());
+            measurement.setFrshtt(repairFrshtt(frshtt, measurement.getFrshtt()));
 
             List<Float> cldc = measurements.stream().map(Measurement::getCldc).collect(Collectors.toList());
             measurement.setCldc(repairField(cldc, measurement.getCldc()));
@@ -175,7 +176,7 @@ class Worker implements Runnable {
 
     /**
      * Calculates the standard deviation from all previous values, and compares the param field to the calculated deviation.
-     * Field has to be within 2 times the standard deviation. If the standard deviation is 0, the field gets returned as is.
+     * Field has to be within 3 times the standard deviation. If the standard deviation is 0, the field gets returned as is.
      *
      * @param data  list of floats containing comparing data
      * @param field the field that needs to be checked
@@ -202,9 +203,8 @@ class Worker implements Runnable {
         if (deviation == 0) {
             return field;
         } else {
-            if (field > (avg + 2 * deviation) || field < (avg - 2 * deviation)) {
-                // shenaningans to avoid too many decimals
-                return (float) Math.round(avg * 100) / 100;
+            if (field > (avg + 3 * deviation) || field < (avg - 3 * deviation)) {
+                return avg;
             } else {
                 return field;
             }
@@ -254,11 +254,15 @@ class Worker implements Runnable {
      * Seperate repair function for the Frshtt field it is irregular compared to the other fields.
      *
      * @param field field that needs to be corrected
-     * @return returns "000000" if empty, returns field if not empty.
+     * @return returns "000000" if empty, the previous value if field empty and an empty cache, returns field if not empty.
      */
-    private static String repairFrshtt(String field) {
+    private static String repairFrshtt(List<String> data, String field) {
         if (field.equals("")) {
-            return "000000";
+            if (data.size() == 0){
+                return "000000";
+            } else{
+                return data.get(data.size()-1);
+            }
         } else {
             return field;
         }

@@ -18,6 +18,8 @@ public class DataAccess {
     private final Deque<Measurement> cache;
 
     /**
+     * Constructor for DataAccess. Creates Directory for the station if necessary, determines loads in cache.
+     *
      * @param pathToDataDir Directory where all station numbers should be stored
      * @param stn           Station number
      * @param cacheSize     size of the cache

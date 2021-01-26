@@ -53,10 +53,10 @@ public class DataAccess {
      * @param values a Measurement.
      */
     synchronized void writeRow(Measurement values) {
-        cache.addLast(values);
+        cache.addFirst(values);
 
         if (cache.size() > cacheSize) {
-            cache.removeFirst();
+            cache.removeLast();
         }
 
         // Writes to .csv file. Doesn't need to be flushed/closed, because try-with-resources takes care of that.
